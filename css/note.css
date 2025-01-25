@@ -1,0 +1,121 @@
+body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  font-family: "Shadows Into Light", cursive;
+  min-height: 100vh;
+}
+
+.notepad {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  box-shadow: 10px 10px 40px rgba(black, 0.15);
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+}
+
+.top {
+  width: 100%;
+  height: 65px;
+  background: #333;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.addimage,
+.back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+}
+
+#editable {
+  flex-grow: 1;
+  text-align: center;
+  color: white;
+  font-size: 1.2rem;
+  min-height: 40px;
+  outline: none;
+  border: none;
+  margin: 0 15px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.paper {
+  padding: 30px;
+  line-height: 32px;
+  outline: 0;
+  font-size: 22px;
+  background-color: transparent;
+  position: relative;
+}
+
+.image-container {
+  display: flex;
+  justify-content: center;
+}
+
+.image-container img {
+  max-width: 500px;
+  height: auto;
+}
+
+.image-container .delete-icon {
+  background: red;
+  color: white;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.image-container:hover .delete-icon {
+  opacity: 1;
+}
+
+.limit {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  font-size: 1rem;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+#notes {
+  background: repeating-linear-gradient(
+    #f1ede9,
+    #f1ede9 31px,
+    #94acd4 31px,
+    #94acd4 32px
+  );
+  background-size: 100% auto;
+  min-height: 100%;
+  flex-grow: 1;
+  overflow-y: auto;
+}
