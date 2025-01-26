@@ -9,6 +9,8 @@ function createTable($database){
         note_name varchar(100),
         note TEXT,
         note_images JSON,
+        pinned BOOLEAN DEFAULT FALSE,
+        pin_order INT DEFAULT NULL,
         user_id VARCHAR(20),
         CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )")) {

@@ -29,14 +29,15 @@
     // load notes
     async function loadNotes() {
         try {
-            const notes = await callApi({ action: 'getAllNotes', params: {} }) || [];
+            const notes = await callApi({ action: 'getAllNotes', params: {
+                "order": "pin"
+            } }) || [];
 
             if (notes && notes?.redirect){
                 window.location.href = `${notes?.redirect}`;
             } else if (notes && notes?.length > 0) {
                 // Rendering all notes
                 notes.forEach((note) => {
-                    
                     const noteName = note?.note_name?.length > 50 
                     ? `${note?.note_name.slice(0, 50)}...` 
                     : note?.note_name || "Untitled Note";
@@ -46,7 +47,7 @@
                     ? `${note?.note.slice(0, 150)}...` 
                     : note?.note || "No Content...";
                     
-                    AddNoteDiv(note?.note_id, noteName, noteContent, "all");
+                    AddNoteDiv(note?.note_id, noteName, noteContent, note?.pin, "all");
                 });
             }
         } catch (error) {
@@ -71,22 +72,21 @@
     });
 
     // adding notes div
-    function AddNoteDiv(noteid , notetitle, notecontent, Type){
+    function AddNoteDiv(noteid , notetitle, notecontent, pinned , Type){
         if (!noteid) return;
         const noteElement = document.createElement("div");
         noteElement.classList.add("note-wrapper");
         noteElement.innerHTML = `
         <div class="operations">
         <div class="title">${notetitle}</div>
-        <button class="delete fas fa-trash-alt "onclick="notedelete(event , ${noteid})"></button>
-        <button class="pin fas fa-thumbtack"></button>
-        <button class="pinned fas fa-thumbtack"></button>
+        <button class="delete operations_buttons fas fa-trash-alt "onclick="notedelete(event , ${noteid})"></button>
+        <button class="${pinned ? "pinned" : "pin"} operations_buttons fas fa-thumbtack" onclick="notepin(event , ${noteid})"></button>
         </div>
         <div class="main">${notecontent}</div>
         `;
         
         noteElement.addEventListener("click", (e) => {
-            if (!e.target.classList.contains("delete")) {
+            if (!e.target.classList.contains("operations_buttons")) {
                 window.location.href = `./note.php?id=${noteid}`;
             }
         });
@@ -95,6 +95,26 @@
             notesContainer.appendChild(noteElement);
         } else if (Type === "search") {
             SearchNotesContainer.appendChild(noteElement)
+        }
+    }
+
+    // Pin Note
+    async function notepin(event , noteId) {
+        event.stopPropagation();
+
+        const NotePinned = await callApi({
+            action: "pinNote",
+            params: {
+                note_id: noteId
+            }
+        })
+
+        if (NotePinned?.redirect){
+            window.location.href = `${NotePinned?.redirect}`;
+        } else if (NotePinned?.status === "success"){
+            console.log("clearing html")
+            notesContainer.innerHTML = "";
+            await loadNotes();
         }
     }
     
@@ -177,7 +197,7 @@
                         ? `${note?.note.slice(0, 150)}...` 
                         : note?.note || "No Content...";
                         
-                        AddNoteDiv(note?.note_id, noteName, noteContent, "search");
+                        AddNoteDiv(note?.note_id, noteName, noteContent, note?.pin , "search");
                     });
                 }
 

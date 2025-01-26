@@ -347,15 +347,76 @@ function getNote($note_id, $userid) {
     }
 }
 
+// pin & unpin note
+function pinNote($note_id, $user_id) {
+    global $connection;
+
+    $note_id = mysqli_real_escape_string($connection, $note_id);
+    $user_id = mysqli_real_escape_string($connection, $user_id);
+
+    $stmt = $connection->prepare("SELECT pinned FROM notes WHERE note_id = ? AND user_id = ?");
+    $stmt->bind_param("is", $note_id, $user_id);
+    $stmt->execute();
+    $stmt->store_result();
+
+    if ($stmt->num_rows > 0) {
+        $pinned = 0;
+        $stmt->bind_result($pinned);
+        $stmt->fetch(); 
+
+        $pin = $pinned == 1 ? 0 : 1;
+
+        $pin_order = $pin == 1 ? time() : NULL;
+
+        $updateStmt = $connection->prepare("
+            UPDATE notes 
+            SET pinned = ?, pin_order = ? 
+            WHERE note_id = ? AND user_id = ?
+        ");
+
+        $updateStmt->bind_param("iiss", $pin, $pin_order, $note_id, $user_id);
+        $updateStmt->execute();
+
+        if ($updateStmt->affected_rows > 0) {
+            return [
+                'status' => 'success',
+                'pin' => $pin == 1 ? true : false,
+            ];
+        } else {
+            return [
+                'status' => 'error',
+                'message' => 'Failed to update note status.',
+            ];
+        }
+    } else {
+        return [
+            'status' => 'error',
+            'message' => 'Note not found.',
+        ];
+    }
+}
+
+
 // get all note
-function getAllNotes($userid) {
+function getAllNotes($userid, $Order) {
     global $connection;
 
     try {
-        $stmt = mysqli_prepare($connection, "SELECT note_id, note_name, note FROM notes WHERE user_id = ?");
+
+        $query = "SELECT * FROM notes WHERE user_id = ? ";
+
+        // For Sorting
+        if ($Order === 'pin') {
+            $query .= "ORDER BY pinned DESC, pin_order DESC";
+        } elseif ($Order === 'asc') {
+            $query .= "ORDER BY note_name ASC";
+        } elseif ($Order === 'desc') {
+            $query .= "ORDER BY note_name DESC";
+        }
+        $stmt = mysqli_prepare($connection, $query);
         mysqli_stmt_bind_param($stmt, 's', $userid);
-        
         mysqli_stmt_execute($stmt);
+
         $result = mysqli_stmt_get_result($stmt);
 
         if ($result) {
@@ -368,6 +429,7 @@ function getAllNotes($userid) {
                     $data[] = [
                         "note_id" => $row['note_id'],
                         "note_name" => $row['note_name'],
+                        "pin" => $row['pinned'],
                         "note" => $cleanedNoteContent
                     ];
                 }

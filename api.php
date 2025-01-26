@@ -11,14 +11,14 @@ if (isset($_COOKIE['token'])) {
         setcookie('token', '', time() - 3600, '/');
         $LoggedIn = false;
     } else {
-        if (!empty($loginCheck["user"])) {
+        if (isset($loginCheck["user"])) {
             $user = $loginCheck["user"];
             // set id
-            if (!empty($user["id"])) {
+            if (isset($user["id"])) {
                 $userid = $user["id"];
             }
             // set username
-            if (!empty($user["name"])) {
+            if (isset($user["name"])) {
                 $username = $user["name"];
             }
             $LoggedIn = true;
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         switch ($action) {
             case 'addNote':
                 if ($LoggedIn) {
-                    if (empty($params['note_id'])) {
+                    if (!isset($params['note_id'])) {
                         $response = ['error' => 'Missing note_id parameters for addNote'];
                     } else {
                         $response = addNote($params['note_id'], $userid);
@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'removeNote':
                 if ($LoggedIn) {
-                    if (empty($params['note_id'])) {
+                    if (!isset($params['note_id'])) {
                         $response = ['error' => 'Missing note_id for removeNote'];
                     } else {
                         $response = removeNote($params['note_id'], $userid);
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case "getNote":
                 if ($LoggedIn) {
-                    if (empty($params['note_id'])) {
+                    if (!isset($params['note_id'])) {
                         $response = ['error' => 'Missing note_id for getNote'];
                     } else {
                         $response = getNote($params['note_id'], $userid);
@@ -77,16 +77,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             case 'updateNote':
-                if (empty($params['note_id']) || empty($params['new_note_name']) || empty($params['new_note_content'])) {
-                    $response = ['error' => 'Missing required parameters for updateNote'];
-                } else {
-                    $response = updateNote($params['note_id'], $params['new_note_name'], $params['new_note_content'], $params['new_images'], $userid);
+                if ($LoggedIn) {
+                    if (!isset($params['note_id']) || !isset($params['new_note_name']) || !isset($params['new_note_content'])) {
+                        $response = ['error' => 'Missing required parameters for updateNote'];
+                    } else {
+                        $response = updateNote($params['note_id'], $params['new_note_name'], $params['new_note_content'], $params['new_images'], $userid);
+                    }
                 }
                 break;
 
             case 'findNote':
                 if ($LoggedIn) {
-                    if (empty($params['word'])) {
+                    if (!isset($params['word'])) {
                         $response = ['error' => 'Missing word for findNote'];
                     } else {
                         $response = findNote($params['word'], $userid);
@@ -98,14 +100,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'getAllNotes':
                 if ($LoggedIn) {
-                    $response = getAllNotes($userid);
+                    $response = getAllNotes($userid, $params['order'] ?? null);
                 } else {
                     $response = ['redirect' => './login.php'];
                 }
                 break;
 
+            case 'pinNote':
+                if ($LoggedIn){
+                    if (!isset($params['note_id'])){
+                        $response = ['error' => 'Missing required parameters'];
+                    } else {
+                        $response = pinNote($params['note_id'], $userid);
+                    }
+                } else {
+                    $response = ['redirect' => './login.php'];
+                }
+
+                break;
+            
             case 'signup':
-                if (empty($params['user_id']) || empty($params['email']) || empty($params['pass']) || empty($params['username'])) {
+                if (!isset($params['user_id']) || !isset($params['email']) || !isset($params['pass']) || !isset($params['username'])) {
                     $response = ['error' => 'Missing required parameters for signup'];
                 } else {
                     $response = signup(
@@ -132,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             case 'login':
-                if (empty($params['username']) || empty($params['pass'])) {
+                if (!isset($params['username']) || !isset($params['pass'])) {
                     $response = ['error' => 'Missing username or password for login'];
                 } else {
                     $response = loginWithPassword($params['username'], $params['pass']);

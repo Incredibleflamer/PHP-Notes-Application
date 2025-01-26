@@ -144,9 +144,7 @@ h2 {
   padding: 1rem;
 }
 
-.delete,
-.pin,
-.pinned {
+.operations_buttons {
   background: transparent;
   border: none;
   color: #d77a61;
