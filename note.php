@@ -27,9 +27,7 @@
           },
         });
 
-        if (note && note?.redirect){
-          window.location.href = `${note?.redirect}`;
-        } else if (note && note?.status === "success") {
+        if (note && note?.status === "success") {
           let noteContent = note?.data?.note_content;
           let HtmlData = `<div class="paper" contenteditable="true" id="paper">${noteContent}`;
 
@@ -316,13 +314,19 @@
 
       // API helper function
       async function callApi(data) {
-        return await fetch("./api.php", {
+        const data = await fetch("./api.php", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
         }).then((response) => response.json());
+
+        if (data?.redirect){
+          window.location.href = `${data?.redirect}`;
+        }
+
+        return data
       }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

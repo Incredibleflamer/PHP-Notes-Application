@@ -396,23 +396,21 @@ function pinNote($note_id, $user_id) {
     }
 }
 
-
 // get all note
 function getAllNotes($userid, $Order) {
     global $connection;
 
     try {
 
-        $query = "SELECT * FROM notes WHERE user_id = ? ";
+        $query = "SELECT * FROM notes WHERE user_id = ? ORDER BY pinned DESC, pin_order DESC ";
 
         // For Sorting
-        if ($Order === 'pin') {
-            $query .= "ORDER BY pinned DESC, pin_order DESC";
-        } elseif ($Order === 'asc') {
-            $query .= "ORDER BY note_name ASC";
+        if ($Order === 'asc') {
+            $query .= ", note_name ASC";
         } elseif ($Order === 'desc') {
-            $query .= "ORDER BY note_name DESC";
+            $query .= ", note_name DESC";
         }
+
         $stmt = mysqli_prepare($connection, $query);
         mysqli_stmt_bind_param($stmt, 's', $userid);
         mysqli_stmt_execute($stmt);

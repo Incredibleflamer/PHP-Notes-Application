@@ -11,33 +11,53 @@
     <title>Notes Application</title>
 </head>
 <body>
-    <h2>Notes Application</h2>
+    <h2 id="greeting">Hello!</h2>
     <div class="container">
-      <button class="btn_add"><i class="fas fa-pencil"></i> Add Note</button>
-      <div class="search-container">
-        <button class="btn_search"><i class="fas fa-search"></i> Search</button>
-        <input type="text" class="search-bar" placeholder="Type to search..." />
-      </div>
+        <button class="btn_add"><i class="fas fa-pencil"></i> Add Note</button>
+        <div class="sort-dropdown">
+            <select id="sortOptions">
+                <option value="" selected>Sort: Default</option>
+                <option value="asc">Sort: Ascending</option>
+                <option value="desc">Sort: Descending</option>
+            </select>
+        </div>
+        <div class="search-container">
+            <button class="btn_search"><i class="fas fa-search"></i> Search</button>
+            <input type="text" class="search-bar" placeholder="Type to search..." />
+        </div>
     </div>
     <div class="notes_container" id="all"></div>
     <div class="notes_container hidden" id="notes_search"></div>
     <script>
     const notesContainer = document.querySelector("#all");
     const SearchNotesContainer = document.querySelector("#notes_search");
-    loadNotes()
+    const greeting = document.querySelector("#greeting");
+
+    const sortOptions = document.querySelector("#sortOptions");
+    let LastSort = sortOptions.value;
+
+    sortOptions.addEventListener("change", async (e) => {
+        LastSort = e.target.value;
+        notesContainer.innerHTML = "";
+        await loadNotes(LastSort);
+    });
+
+    loadNotes(LastSort);
 
     // load notes
-    async function loadNotes() {
+    async function loadNotes(sortOrder = "") {
         try {
             const notes = await callApi({ action: 'getAllNotes', params: {
-                "order": "pin"
+                order: sortOrder
             } }) || [];
 
-            if (notes && notes?.redirect){
-                window.location.href = `${notes?.redirect}`;
-            } else if (notes && notes?.length > 0) {
+            if (notes && notes?.username){
+                greeting.textContent = `Hello ${notes?.username.trim().toLowerCase().replace(/^\w/, (c) => c.toUpperCase())}!`;
+            }
+
+            if (notes && notes?.data && notes?.data?.length > 0) {
                 // Rendering all notes
-                notes.forEach((note) => {
+                notes?.data.forEach((note) => {
                     const noteName = note?.note_name?.length > 50 
                     ? `${note?.note_name.slice(0, 50)}...` 
                     : note?.note_name || "Untitled Note";
@@ -64,8 +84,6 @@
         }})
         if (AddedToDB && AddedToDB?.status === "success"){
             window.location.href = `./note.php?id=${id}`;
-        } else if (AddedToDB && AddedToDB?.redirect) {
-            window.location.href = `${AddedToDB?.redirect}`;
         } else {
             // TODO : SHOW ERROR
         }
@@ -109,12 +127,9 @@
             }
         })
 
-        if (NotePinned?.redirect){
-            window.location.href = `${NotePinned?.redirect}`;
-        } else if (NotePinned?.status === "success"){
-            console.log("clearing html")
+        if (NotePinned?.status === "success"){
             notesContainer.innerHTML = "";
-            await loadNotes();
+            await loadNotes(LastSort);
         }
     }
     
@@ -134,8 +149,6 @@
             if (noteElement) {
                 noteElement.remove();
             }
-        } else if (deleted_note && deleted_note?.redirect){
-            window.location.href = `${deleted_note?.redirect}`;
         } else {
             // TODO : ALERT
         }
@@ -184,9 +197,7 @@
                 // clearing old notes
                 SearchNotesContainer.innerHTML = "";
 
-                if (Found_Notes && Found_Notes?.redirect){
-                    window.location.href = `${notes?.redirect}`;
-                } else if (Found_Notes && Found_Notes?.length > 0){
+                if (Found_Notes && Found_Notes?.length > 0){
                     // loading notes
                     Found_Notes.forEach((note) => {
                         const noteName = note?.note_name?.length > 50 
@@ -237,13 +248,19 @@
 
     // function for making api calls
     async function callApi(data) {
-        return await fetch("./api.php", {
+        const Responsedata = await fetch("./api.php", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(data)  
         }).then(response => response.json());
+
+        if (Responsedata?.redirect){
+            window.location.href = `${Responsedata?.redirect}`;
+        }
+
+        return Responsedata;
     }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

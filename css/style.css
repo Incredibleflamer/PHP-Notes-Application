@@ -14,11 +14,13 @@ body {
 
 h2 {
   font-size: 6rem;
+  font-weight: bold;
   color: #504949;
   position: absolute;
   top: 4rem;
   left: 4rem;
   border-bottom: 4px solid #504949;
+  font-family: inherit;
 }
 
 /* add note */
@@ -124,7 +126,7 @@ h2 {
 .notes_container {
   display: flex;
   flex-wrap: wrap;
-  row-gap: 7rem;
+  row-gap: 1rem;
 }
 
 .note-wrapper {
@@ -186,4 +188,33 @@ h2 {
   height: 250px;
   padding: 20px;
   word-wrap: break-word;
+}
+
+.sort-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.sort-dropdown select {
+  background: #504949;
+  color: white;
+  padding: 0.6rem 2rem;
+  border-radius: 30px;
+  font-size: 1.5rem;
+  border: none;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sort-dropdown::after {
+  content: "\25BC";
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+  color: white;
+  pointer-events: none;
+  font-size: 1.2rem;
 }
