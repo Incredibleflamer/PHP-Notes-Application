@@ -188,7 +188,7 @@ function removeNote($note_id, $userid) {
 }
 
 // upate note
-function updateNote($note_id, $new_note_name, $new_note_content, $new_images, $userid) {
+function updateNote($note_id, $new_note_name, $new_note_content, $new_images, $new_checklists , $userid) {
     global $connection;
 
     try {
@@ -202,48 +202,16 @@ function updateNote($note_id, $new_note_name, $new_note_content, $new_images, $u
                 'status' => 'error',
                 'message' => "Note with id $note_id not found or you don't have permission to edit it!",
             ];
-        }
-
-        $existing_note = mysqli_fetch_assoc($result);
-        $existing_images = json_decode($existing_note['note_images'], true) ?? [];
-
-        $updated_images = [];
-
-        foreach ($new_images as $image) {
-            $image_name = $image['image_name'];
-
-            if (is_null($image['image_data'])) {
-                $updated_images[] = $image_name;
-                continue;
-            }
-
-            $image_path = __DIR__ . "/../images/$image_name.png";
-            if (file_put_contents($image_path, base64_decode($image['image_data']))) {
-                $updated_images[] = $image_name . '.png';
-            } else {
-                return [
-                    'status' => 'error',
-                    'message' => "Failed to save image $image_name to disk.",
-                ];
-            }
-        }
-
-        $images_to_remove = array_diff($existing_images, $updated_images);
-
-        foreach ($images_to_remove as $image_name) {
-            $image_path = __DIR__ . "/../images/$image_name";
-            if (file_exists($image_path)) {
-                unlink($image_path);
-            }
-        }
+        }       
 
         $new_note_name = mysqli_real_escape_string($connection, $new_note_name);
         $new_note_content = mysqli_real_escape_string($connection, $new_note_content);
-        $images_json = mysqli_real_escape_string($connection, json_encode($updated_images));
+        $images_json = mysqli_real_escape_string($connection, json_encode($new_images));
+        $checklist_json = mysqli_real_escape_string($connection , json_encode($new_checklists));
 
         $update_query = "
             UPDATE notes
-            SET note_name = '$new_note_name', note = '$new_note_content', note_images = '$images_json'
+            SET note_name = '$new_note_name', note = '$new_note_content', note_images = '$images_json', checklist = '$checklist_json'
             WHERE note_id = '$note_id' AND user_id = '$userid'
         ";
 
@@ -310,12 +278,13 @@ function getNote($note_id, $userid) {
         $note_id = mysqli_real_escape_string($connection, $note_id);
         $userid = mysqli_real_escape_string($connection, $userid);
 
-        $result = mysqli_query($connection, "SELECT note_id, note_name, note, note_images FROM notes WHERE note_id = '$note_id' AND user_id = '$userid'");
+        $result = mysqli_query($connection, "SELECT * FROM notes WHERE note_id = '$note_id' AND user_id = '$userid'");
 
         if ($result) {
             if (mysqli_num_rows($result) > 0) {
                 $note = mysqli_fetch_assoc($result);
                 $images = json_decode($note['note_images'], true) ?? [];
+                $checklist = json_decode($note['checklist'], true) ?? [];
 
                 return [
                     'status' => 'success',
@@ -324,6 +293,7 @@ function getNote($note_id, $userid) {
                         'note_name' => $note['note_name'],
                         'note_content' => $note['note'],
                         'note_images' => $images,
+                        'checklist' => $checklist,
                     ],
                 ];
             } else {

@@ -9,6 +9,7 @@ function createTable($database){
         note_name varchar(100),
         note TEXT,
         note_images JSON,
+        checklist JSON,
         pinned BOOLEAN DEFAULT FALSE,
         pin_order INT DEFAULT NULL,
         user_id VARCHAR(20),

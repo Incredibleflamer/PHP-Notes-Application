@@ -78,10 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'updateNote':
                 if ($LoggedIn) {
-                    if (!isset($params['note_id']) || !isset($params['new_note_name']) || !isset($params['new_note_content'])) {
+                    if (!isset($params['note_id']) || !isset($params['new_note_name']) || !isset($params['new_note_content']) || !isset($params['new_checklists'])) {
                         $response = ['error' => 'Missing required parameters for updateNote'];
                     } else {
-                        $response = updateNote($params['note_id'], $params['new_note_name'], $params['new_note_content'], $params['new_images'], $userid);
+                        $response = updateNote($params['note_id'], $params['new_note_name'], $params['new_note_content'], $params['new_images'], $params['new_checklists'] , $userid);
                     }
                 }
                 break;
