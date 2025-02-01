@@ -14,7 +14,7 @@
     <script>
       try {
         let noteId = null;
-        let NotesString = "";
+        let NotesData = {};
 
         LoadNote();
 
@@ -30,14 +30,17 @@
           });
 
           if (note && note?.status === "success") {
-            NotesString = note?.data?.note_content;
+            NotesData = {
+              content: note?.data?.note_content,
+              name: note?.data?.note_name,
+            }
             let noteContent = note?.data?.note_content;
             let HtmlData = `<div class="paper" contenteditable="true" id="paper" oninput="updateWordCount()">${noteContent}`
 
             // replacing all \n with new div
             HtmlData = HtmlData.replaceAll(/\n/g, '<br>');
 
-            const images = note?.data?.note_images || [];
+            const images = note?.data?.note_images ?? [];
             images.forEach((image) => {
               HtmlData = addImage(HtmlData, image);
             });
@@ -52,7 +55,7 @@
 
           <div class="top">
             <i class="fas fa-arrow-left back" onclick="goback()"></i>
-            <div contenteditable="true" id="editable">${
+            <div contenteditable="true" id="editable" oninput="HandleName(this)">${
               note?.data?.note_name ? note?.data?.note_name : "Untitled Note"
             }</div>
             <div class="menu-container">
@@ -308,10 +311,16 @@
               },
             });
 
-            NotesString = noteContent;
+            NotesData = {
+              content: noteContent,
+              name: titleField.innerText,
+            }
+
             SavedOrNot.textContent = "Saved";
           } else {
-            if (noteContent !== NotesString) {
+            if (
+              (noteContent !== NotesData?.content) || 
+              (titleField.innerText !== NotesData?.name)) {
               SavedOrNot.textContent = "Not Saved";
             } else {
               SavedOrNot.textContent = "Saved";
@@ -336,6 +345,7 @@
           return data;
         }
 
+        // Handle Word Count
         function updateWordCount() {
           const limit = document.querySelector(".limit");
           const maxChars = 60000;
@@ -372,11 +382,13 @@
           SaveData(false);
         }
 
+        // Tongle Menu
         function toggleMenu() {
           const menu = document.getElementById("menu");
           menu.classList.toggle("show");
         }
 
+        // Tongle Menu
         document.addEventListener("click", function (event) {
           const menu = document.getElementById("menu");
           const menuIcon = document.querySelector(".menu-icon");
@@ -388,6 +400,7 @@
           }
         });
 
+        // Checklist Create
         function createChecklist() {
           const notesContainer = document.getElementById("notes");
           const checklistContainer = createElement("div", ["checklist"]);
@@ -477,6 +490,14 @@
 
         function goback() {
           window.location.href = "index.php";
+        }
+
+        function HandleName(element) {
+          const MaxLength = 100;
+          if (element.innerText.length > MaxLength) {
+            element.innerText = element.innerText.substring(0, MaxLength);
+          }
+          SaveData(false);
         }
       } catch (err) {
         console.log(err);
