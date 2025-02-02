@@ -41,6 +41,24 @@ h2 {
   font-size: 1.5rem;
 }
 
+/* logout */
+#logout {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  outline: none;
+  border: none;
+  background: #504949;
+  color: white;
+  padding: 0.6rem 2rem;
+  font-family: inherit;
+  border-radius: 30px;
+  font-size: 1rem;
+  cursor: pointer;
+  width: 210px;
+  font-size: 1.5rem;
+}
+
 /* search */
 .container {
   display: flex;
@@ -52,7 +70,7 @@ h2 {
 .search-container {
   position: absolute;
   display: inline-block;
-  top: -7rem;
+  top: 0rem;
   right: 1rem;
 }
 

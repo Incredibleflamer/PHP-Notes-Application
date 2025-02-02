@@ -175,7 +175,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 break;
-
+            case 'logout':
+                setcookie('token', '', time() - 3600, '/'); 
+                $LoggedIn = false;
+                $userid = null;
+                $username = null;
+                $response = ['status' => 'success', 'message' => 'Logged out successfully', 'redirect' => './login.php'];
+                break;
+                
             default:
                 $response = ['error' => 'Invalid action'];
                 break;

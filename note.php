@@ -262,7 +262,7 @@
 
           Array.from(papers).forEach((item) => {
             if (item.classList.contains("paper")) {
-              let notescontents = item?.innerHTML?.replaceAll("<div> <br> </div>", "\n")
+              let notescontents = item?.innerHTML?.replaceAll("<div><br></div>", "\n").replaceAll("<br>" , "\n").replaceAll("</div>", "\n").replaceAll("<div>", "");
               if (notescontents.length > 0){
                 noteContent += notescontents;
               }

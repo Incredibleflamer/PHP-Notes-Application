@@ -11,6 +11,7 @@
     <title>Notes Application</title>
 </head>
 <body>
+    <button id="logout" onclick="Logout()">Logout</button>
     <h2 id="greeting">Hello!</h2>
     <div class="container">
         <button class="btn_add"><i class="fas fa-pencil"></i> Add Note</button>
@@ -183,45 +184,6 @@
         e.stopPropagation();
     });
     
-    searchBar.addEventListener("keydown", async (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            if (searchBar.value.trim().length > 0){
-                // search the query
-                const Found_Notes = await callApi({
-                    action: "findNote",
-                    params: {
-                        word: searchBar.value.trim()
-                    }
-                });
-                // clearing old notes
-                SearchNotesContainer.innerHTML = "";
-
-                if (Found_Notes && Found_Notes?.length > 0){
-                    // loading notes
-                    Found_Notes.forEach((note) => {
-                        const noteName = note?.note_name?.length > 50 
-                        ? `${note?.note_name.slice(0, 50)}...` 
-                        : note?.note_name || "Untitled Note";
-
-                        const noteContent = note?.note?.length > 150 
-                        ? `${note?.note.slice(0, 150)}...` 
-                        : note?.note || "No Content...";
-                        
-                        AddNoteDiv(note?.note_id, noteName, noteContent, note?.pin , "search");
-                    });
-                }
-
-                // show the results & hide all notes
-                notesContainer.classList.add("hidden")
-                notesContainer.classList.remove("notes_container")
-                SearchNotesContainer.classList.remove("hidden")
-                SearchNotesContainer.classList.add("notes_container")
-            }
-            searchBar.blur();
-        }
-    });
-    
     clearButton.addEventListener("click", () => {
         searchBar.value = "";
         searchBar.focus();
@@ -234,17 +196,60 @@
         SearchNotesContainer.classList.remove("notes_container")
     });
     
-    searchBar.addEventListener("input", () => {
-        if (searchBar.value.trim() !== "") {
-          clearButton.style.display = "block";
-        } else {
-          clearButton.style.display = "none";
-          notesContainer.classList.remove("hidden")
-          notesContainer.classList.add("notes_container")
-          SearchNotesContainer.classList.add("hidden")
-          SearchNotesContainer.classList.remove("notes_container")
-        }
+    searchBar.addEventListener("input", async () => {
+    const sortDropdown = document.querySelector(".sort-dropdown");
+    if (searchBar.value.trim().length > 0) {
+        clearButton.style.display = "block";
+        sortDropdown.style.display = "none"; 
+        await performSearch(searchBar.value.trim());
+    } else {
+        clearButton.style.display = "none";
+        sortDropdown.style.display = "block";
+        resetNotesView();
+    }});
+
+    async function performSearch(query) {
+    if (!query) return;
+
+    const Found_Notes = await callApi({
+        action: "findNote",
+        params: { word: query }
     });
+
+    SearchNotesContainer.innerHTML = "";
+
+    if (Found_Notes && Found_Notes.length > 0) {
+        Found_Notes.forEach((note) => {
+            const noteName = note?.note_name?.length > 50
+                ? `${note?.note_name.slice(0, 50)}...`
+                : note?.note_name || "Untitled Note";
+
+            const noteContent = note?.note?.length > 150
+                ? `${note?.note.slice(0, 150)}...`
+                : note?.note || "No Content...";
+
+            AddNoteDiv(note?.note_id, noteName, noteContent, note?.pin, "search");
+        });
+    }
+
+    notesContainer.classList.add("hidden");
+    SearchNotesContainer.classList.remove("hidden");
+}
+
+function resetNotesView() {
+    notesContainer.classList.remove("hidden");
+    SearchNotesContainer.innerHTML = "";
+    SearchNotesContainer.classList.add("hidden");
+}
+
+
+    // logout
+    async function Logout() {
+        await callApi({
+            action: "logout",
+            params: {}
+        })
+    }
 
     // function for making api calls
     async function callApi(data) {
