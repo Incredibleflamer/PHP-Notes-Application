@@ -61,7 +61,7 @@ document.querySelector(".btn_add").addEventListener("click", async () => {
     },
   });
   if (AddedToDB && AddedToDB?.status === "success") {
-    window.location.href = `./note.php?id=${id}`;
+    window.location.href = `./note.html?id=${id}`;
   } else {
     // TODO : SHOW ERROR
   }
@@ -85,7 +85,7 @@ function AddNoteDiv(noteid, notetitle, notecontent, pinned, Type) {
 
   noteElement.addEventListener("click", (e) => {
     if (!e.target.classList.contains("operations_buttons")) {
-      window.location.href = `./note.php?id=${noteid}`;
+      window.location.href = `./note.html?id=${noteid}`;
     }
   });
 

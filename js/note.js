@@ -92,7 +92,7 @@ try {
         }
       });
     } else {
-      window.location = "./404.php";
+      window.location = "./404.html";
     }
   }
 
@@ -472,7 +472,7 @@ try {
   }
 
   function goback() {
-    window.location.href = "index.php";
+    window.location.href = "./";
   }
 
   function HandleName(element) {

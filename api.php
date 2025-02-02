@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $response = addNote($params['note_id'], $userid);
                     }
                 } else {
-                    $response = ['redirect' => './login.php?error=You Need To Login First To Access'];
+                    $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
                 }
                 break;
 
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $response = removeNote($params['note_id'], $userid);
                     }
                 } else {
-                    $response = ['redirect' => './login.php?error=You Need To Login First To Access'];
+                    $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
                 }
                 break;
 
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $response = getNote($params['note_id'], $userid);
                     }
                 } else {
-                    $response = ['redirect' => './login.php?error=You Need To Login First To Access'];
+                    $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
                 }
                 break;
 
@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $response = findNote($params['word'], $userid);
                     }
                 } else {
-                    $response = ['redirect' => './login.php?error=You Need To Login First To Access'];
+                    $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
                 }
                 break;
 
@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         "username" => $username
                     ];
                 } else {
-                    $response = ['redirect' => './login.php?error=You Need To Login First To Access'];
+                    $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
                 }
                 break;
 
@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $response = pinNote($params['note_id'], $userid);
                     }
                 } else {
-                    $response = ['redirect' => './login.php?error=You Need To Login First To Access'];
+                    $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
                 }
 
                 break;
@@ -180,7 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $LoggedIn = false;
                 $userid = null;
                 $username = null;
-                $response = ['status' => 'success', 'message' => 'Logged out successfully', 'redirect' => './login.php'];
+                $response = ['status' => 'success', 'message' => 'Logged out successfully', 'redirect' => './login.html'];
                 break;
                 
             default:

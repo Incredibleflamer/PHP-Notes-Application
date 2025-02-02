@@ -255,10 +255,11 @@ function findNote($word, $userid) {
             if (mysqli_num_rows($result) > 0) {
                 $data = [];
                 while ($row = mysqli_fetch_assoc($result)) {
+                    $cleanedNoteContent = preg_replace('/\{\[([^\]]+)\]\}/', '', $row["note"]);
                     array_push($data, [
                         "note_id" => $row['note_id'],
                         "note_name" => $row['note_name'],
-                        "note" => $row["note"],
+                        "note" => $cleanedNoteContent,
                     ]);
                 }
                 return $data;
