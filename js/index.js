@@ -167,7 +167,6 @@ clearButton.addEventListener("click", () => {
   searchBar.value = "";
   searchBar.focus();
   clearButton.style.display = "none";
-  // show the notes & hide search notes and clear it
   notesContainer.classList.remove("hidden");
   notesContainer.classList.add("notes_container");
   SearchNotesContainer.innerHTML = "";

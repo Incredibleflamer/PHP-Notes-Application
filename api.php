@@ -182,7 +182,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $username = null;
                 $response = ['status' => 'success', 'message' => 'Logged out successfully', 'redirect' => './login.html'];
                 break;
-                
+            case "shareNoteAdd":
+                if ($LoggedIn) {
+                    if (!isset($params['id']) || !isset($params['note_id'])) {
+                        $response = ['error' => 'Missing parameters for share'];
+                    } else {
+                        $response = shareNoteAdd($params['id'], $params['note_id'], $userid);
+                    }
+                } else {
+                    $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
+                }
+                break;
+
+            case "ShareNoteRemove":
+                if ($LoggedIn) {
+                    if (!isset($params['id']) || !isset($params['note_id'])) {
+                        $response = ['error' => 'Missing parameters for share'];
+                    } else {
+                        $response = ShareNoteRemove($params['id'], $params['note_id'], $userid);
+                    }
+                } else {
+                    $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
+                }
+                break;
+
+            case "shareNoteUserAdd":
+                if ($LoggedIn) {
+                    if (!isset($params['id']) || !isset($params['note_id']) || !isset("email")) {
+                        $response = ['error' => 'Missing parameters for share'];
+                    } else {
+                        $response = shareNoteUserAdd($params['id'], $params['note_id'], $params['email'], $userid);
+                    }
+                } else {
+                    $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
+                }
+                break;
+
+            case "shareNoteUserRemove":
+                if ($LoggedIn) {
+                    if (!isset($params['id']) || !isset("email")) {
+                        $response = ['error' => 'Missing parameters for share'];
+                    } else {
+                        $response = shareNoteUserRemove($params['id'], $params['email'], $userid);
+                    }
+                } else {
+                    $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
+                }
+                break;
+
             default:
                 $response = ['error' => 'Invalid action'];
                 break;
