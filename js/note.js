@@ -15,7 +15,7 @@ async function LoadNote() {
 
   if (note && note?.status === "success") {
     NotesData = {
-      id: note?.data?.id,
+      id: note?.data?.note_id,
       content: note?.data?.note_content,
       name: note?.data?.note_name,
       sharing_info: note?.data?.sharing_info,
@@ -295,7 +295,7 @@ async function SaveData(save = false) {
     await callApi({
       action: "updateNote",
       params: {
-        note_id: NotesData?.noteId,
+        note_id: NotesData?.id,
         new_note_name: titleField.innerText,
         new_note_content: noteContent,
         new_images: newImages,
@@ -548,7 +548,7 @@ function loadSharingScreen() {
         </div>
         <div id="sharing-link-container" style="display: none;">
           <p>Link to Note:</p>
-          <input type="text" id="note-link" value="./shared/:id" readonly />
+          <input type="text" id="note-link" value="" readonly />
           <button onclick="copyLink()">Copy Link</button>
           <div>
             <label for="everyone-toggle">Shared with everyone: </label>
@@ -586,9 +586,10 @@ function loadSharingScreen() {
 
     document.getElementById("sharing-link-container").style.display = "block";
 
-    document.getElementById(
-      "note-link"
-    ).value = `${window.location.origin}/shared?id=${NotesData.sharing_info.id}`;
+    const path = window.location.pathname.split("/").slice(0, -1).join("/");
+    const baseUrl = `${window.location.origin}${path}/shared.html?id=${NotesData.sharing_info.id}`;
+
+    document.getElementById("note-link").value = baseUrl;
 
     if (NotesData.sharing_info.shared_with_all) {
       document.getElementById("everyone-toggle").checked = true;
@@ -658,7 +659,7 @@ async function toggleSharing(input) {
         },
       })
     ) {
-      NotesData.sharing_info.id = null;
+      NotesData.sharing_info = {};
     }
   }
 }
@@ -685,9 +686,9 @@ async function toggleEveryone(input) {
   }
 
   await callApi({
-    action: "shareNoteVisiblity",
+    action: "shareNoteVisibility",
     params: {
-      id: Date.now().toString(),
+      id: NotesData.sharing_info.id,
       note_id: NotesData?.id,
       visibility: isVisibleToAll,
     },

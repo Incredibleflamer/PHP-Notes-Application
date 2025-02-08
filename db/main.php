@@ -25,11 +25,11 @@ function login($token) {
 }
 
 // login with password & username
-function loginWithPassword($username, $pass) {
+function loginWithPassword($mail, $pass) {
     global $connection;
 
-    $stmt = $connection->prepare("SELECT id, name, pass FROM users WHERE name = ?");
-    $stmt->bind_param("s", $username);
+    $stmt = $connection->prepare("SELECT id, name , mail, pass FROM users WHERE mail = ?");
+    $stmt->bind_param("s", $mail);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -46,7 +46,8 @@ function loginWithPassword($username, $pass) {
                 'token' => $token, 
                 'user' => [
                     'id' => $user['id'], 
-                    'name' => $user['name']
+                    'name' => $user['name'],
+                    'mail' => $user['mail']
                 ]
             ];
         } else {
@@ -380,7 +381,7 @@ function pinNote($note_id, $userid) {
 }
 
 // note sharing
-function shareNoteAdd($note_id, $share_id, $userid) {
+function shareNoteAdd($share_id, $note_id, $userid) {
     global $connection;
 
     try {
@@ -520,6 +521,88 @@ function shareNoteUserRemove($share_id, $mail, $user_id) {
         return ['status' => 'error', 'message' => 'Exception occurred: ' . $e->getMessage()];
     }
 }
+
+// note share change visiblity
+function shareNoteVisibility($share_id, $note_id, $visibility, $user_id) {
+    global $connection;
+
+    try {
+        $share_id = mysqli_real_escape_string($connection, $share_id);
+        $note_id = mysqli_real_escape_string($connection, $note_id);
+        $visibility = (int) $visibility; 
+        $user_id = mysqli_real_escape_string($connection, $user_id);
+
+        $stmt = $connection->prepare("SELECT * FROM shared_notes WHERE id = ? AND note_id = ? AND user_id = ?");
+        $stmt->bind_param("sss", $share_id, $note_id, $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $updateStmt = $connection->prepare("UPDATE shared_notes SET shared_with_all = ? WHERE id = ? AND note_id = ? AND user_id = ?");
+            $updateStmt->bind_param("isss", $visibility, $share_id, $note_id, $user_id);
+            if ($updateStmt->execute()) {
+                return ['status' => 'success', 'message' => 'Sharing visibility updated'];
+            } else {
+                return ['status' => 'error', 'message' => 'Failed to update sharing visibility'];
+            }
+        } else {
+            return ['status' => 'error', 'message' => 'Shared note not found'];
+        }
+    } catch (mysqli_sql_exception $e) {
+        return ['status' => 'error', 'message' => 'Exception occurred: ' . $e->getMessage()];
+    }
+}
+
+// note find & share info
+function ShareNoteGet($share_id, $user_mail) {
+    global $connection;
+
+    try {
+        $stmt = $connection->prepare("SELECT note_id, shared_with_all FROM shared_notes WHERE id = ?");
+        $stmt->bind_param("s", $share_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 0) {
+            return ['status' => 'error', 'message' => 'Note not found.'];
+        }
+
+        $row = $result->fetch_assoc();
+        $note_id = $row['note_id'];
+        $shared_with_all = $row['shared_with_all'];
+        $hasAccess = false;
+
+        if ($shared_with_all == 1) {
+            $hasAccess = true;
+        } else {
+            $emailStmt = $connection->prepare("SELECT 1 FROM shared_notes_emails WHERE share_id = ? AND email = ?");
+            $emailStmt->bind_param("ss", $share_id, $user_mail);
+            $emailStmt->execute();
+            $emailResult = $emailStmt->get_result();
+            if ($emailResult->num_rows > 0) {
+                $hasAccess = true;
+            }
+        }
+
+        if ($hasAccess) {
+            $noteStmt = $connection->prepare("SELECT * FROM notes WHERE note_id = ?");
+            $noteStmt->bind_param("s", $note_id);
+            $noteStmt->execute();
+            $noteResult = $noteStmt->get_result();
+
+            if ($noteResult->num_rows > 0) {
+                return ['status' => 'success', 'data' => $noteResult->fetch_assoc()];
+            }
+            return ['status' => 'error', 'message' => 'Note content not found.'];
+        }
+        return [ 
+            'redirct' => "'redirect' => './login.html?error=Access denied You do not have permission to view $share_id note login and try again&redirct=/shared.html/?id=$share_id"
+        ];
+    } catch (mysqli_sql_exception $e) {
+        return ['status' => 'error', 'message' => 'Exception occurred: ' . $e->getMessage()];
+    }
+}
+
 
 // get all note
 function getAllNotes($userid, $Order) {

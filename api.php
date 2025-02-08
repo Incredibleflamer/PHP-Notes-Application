@@ -3,6 +3,7 @@ require './db/main.php';
 $LoggedIn = false;
 $username = "";
 $userid = "";
+$mail = "";
 
 if (isset($_COOKIE['token'])) {
     $token = $_COOKIE['token'];
@@ -20,6 +21,10 @@ if (isset($_COOKIE['token'])) {
             // set username
             if (isset($user["name"])) {
                 $username = $user["name"];
+            }
+            // set mail
+            if (isset($user['mail'])){
+                $mail = $user['mail'];
             }
             $LoggedIn = true;
         } else {
@@ -133,53 +138,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $params['pass'],
                         $params['username']
                     );
-
-                    $userid = $params["user_id"];
-                    $username = $params["username"];
-
+                    
                     if ($response['status'] === 'success') {
                         if (isset($response['token'])) {
                             setcookie('token', $response['token'], time() + (3600 * 24), '/');
-                            $LoggedIn = true;
-                        } else {
-                            $LoggedIn = false;
-                            $userid = false;
-                            $username = false;
                         }
                     }
                 }
                 break;
 
             case 'login':
-                if (!isset($params['username']) || !isset($params['pass'])) {
-                    $response = ['error' => 'Missing username or password for login'];
+                if (!isset($params['mail']) || !isset($params['pass'])) {
+                    $response = ['error' => 'Missing mail or password for login'];
                 } else {
-                    $response = loginWithPassword($params['username'], $params['pass']);
+                    $response = loginWithPassword($params['mail'], $params['pass']);
                     if ($response['status'] === 'success') {
-                        $username = $params["username"];
-
                         if (isset($response['token'])) {
                             setcookie('token', $response['token'], time() + (3600 * 24), '/');
-                            if (isset($response["user"])) {
-                                $user = $response["user"];
-                                if (isset($user['id'])) {
-                                    $userid = $user['id'];
-                                }
-                            }
                             $LoggedIn = true;
                         } else {
                             $LoggedIn = false;
-                            $username = "";
-                            $userid = "";
                         }
                     }
                 }
                 break;
             case 'logout':
                 setcookie('token', '', time() - 3600, '/'); 
-                $LoggedIn = false;
-                $userid = null;
-                $username = null;
                 $response = ['status' => 'success', 'message' => 'Logged out successfully', 'redirect' => './login.html'];
                 break;
             case "shareNoteAdd":
@@ -224,6 +208,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $response = ['error' => 'Missing parameters for share'];
                     } else {
                         $response = shareNoteUserRemove($params['id'], $params['email'], $userid);
+                    }
+                } else {
+                    $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
+                }
+                break;
+            
+            case "shareNoteVisibility": 
+                if ($LoggedIn) {
+                    if (!isset($params['id']) || !isset($params["note_id"]) || !isset($params["visibility"])) {
+                        $response = ['error' => 'Missing parameters for share'];
+                    } else {
+                        $response = shareNoteVisibility($params['id'], $params['note_id'], $params['visibility'], $userid);
                     }
                 } else {
                     $response = ['redirect' => './login.html?error=You Need To Login First To Access'];

@@ -41,7 +41,7 @@ function createTable($database){
         user_id VARCHAR(20),
         CONSTRAINT fk_shared_id FOREIGN KEY (share_id) REFERENCES shared_notes(id) ON DELETE CASCADE,
         CONSTRAINT fk_shared_email_user FOREIGN KEY (email) REFERENCES users(mail) ON DELETE CASCADE,
-        CONSTRAINT fk_shared_owner FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        CONSTRAINT fk_shared_owner FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )");
 
     return $connection;

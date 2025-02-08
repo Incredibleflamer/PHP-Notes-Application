@@ -43,16 +43,17 @@ const loginForm = document.getElementById("loginForm");
 loginForm.addEventListener("submit", async function (event) {
   event.preventDefault();
 
-  const username = document.getElementById("loginUsername").value;
+  const email = document.getElementById("loginEmail").value;
   const password = document.getElementById("loginPassword").value;
 
   const data = await callApi({
     action: "login",
     params: {
-      username: username,
+      mail: email,
       pass: password,
     },
   });
+
   document.getElementById("loginForm").reset();
   if (data?.status === "success") {
     window.location.href = "./";
