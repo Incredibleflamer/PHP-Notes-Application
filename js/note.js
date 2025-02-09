@@ -24,7 +24,7 @@ async function LoadNote() {
     let HtmlData = `<div class="paper" contenteditable="true" id="paper" oninput="updateWordCount()">${noteContent}`;
 
     // replacing all \n with new div
-    HtmlData = HtmlData.replaceAll(/\n/g, "<br>");
+    HtmlData = HtmlData.replaceAll("\n", "<br>");
 
     const images = note?.data?.note_images ?? [];
     images.forEach((image) => {
@@ -591,23 +591,23 @@ function loadSharingScreen() {
 
     document.getElementById("note-link").value = baseUrl;
 
-    if (NotesData.sharing_info.shared_with_all) {
-      document.getElementById("everyone-toggle").checked = true;
-      document.getElementById("shared-with-container").style.display = "none";
-    } else {
-      document.getElementById("everyone-toggle").checked = false;
-      document.getElementById("shared-with-container").style.display = "block";
+    document.getElementById("everyone-toggle").checked = false;
+    document.getElementById("shared-with-container").style.display = "block";
 
-      const sharedEmails = NotesData.sharing_info.shared_with_emails;
-      const emailTable = document.getElementById("shared-emails");
-      sharedEmails.forEach((email) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
+    const sharedEmails = NotesData.sharing_info.shared_with_emails;
+    const emailTable = document.getElementById("shared-emails");
+    sharedEmails.forEach((email) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
           <td>${email}</td>
           <td><button onclick="removeEmail(this)">Delete</button></td>
         `;
-        emailTable.appendChild(row);
-      });
+      emailTable.appendChild(row);
+    });
+
+    if (NotesData.sharing_info.shared_with_all) {
+      document.getElementById("everyone-toggle").checked = true;
+      document.getElementById("shared-with-container").style.display = "none";
     }
   } else {
     document.getElementById("sharing-toggle").checked = false;
@@ -637,13 +637,18 @@ async function toggleSharing(input) {
     }
 
     if (!NotesData?.sharing_info?.id) {
+      NotesData.sharing_info.id = Date.now().toString();
       await callApi({
         action: "shareNoteAdd",
         params: {
-          id: Date.now().toString(),
+          id: NotesData.sharing_info.id,
           note_id: NotesData?.id,
         },
       });
+
+      const path = window.location.pathname.split("/").slice(0, -1).join("/");
+      const baseUrl = `${window.location.origin}${path}/shared.html?id=${NotesData.sharing_info.id}`;
+      document.getElementById("note-link").value = baseUrl;
     }
   } else {
     status.textContent = "OFF";
@@ -652,7 +657,7 @@ async function toggleSharing(input) {
 
     if (
       await callApi({
-        action: "shareNoteRemove",
+        action: "ShareNoteRemove",
         params: {
           id: NotesData?.sharing_info?.id,
           note_id: NotesData?.id,
@@ -703,7 +708,7 @@ async function addEmail() {
       await callApi({
         action: "shareNoteUserAdd",
         params: {
-          id: Date.now().toString(),
+          id: NotesData?.sharing_info?.id,
           note_id: NotesData?.id,
           email: emailValue,
         },
@@ -730,7 +735,7 @@ async function removeEmail(button) {
     const response = await callApi({
       action: "shareNoteUserRemove",
       params: {
-        id: Date.now().toString(),
+        id: NotesData?.sharing_info?.id,
         note_id: NotesData?.id,
         email: email,
       },

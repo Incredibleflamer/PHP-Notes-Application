@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!isset($params['id']) || !isset($params['note_id']) || !isset($params["email"])) {
                         $response = ['error' => 'Missing parameters for share'];
                     } else {
-                        $response = shareNoteUserAdd($params['id'], $params['email'], $userid);
+                        $response = shareNoteUserAdd($params['id'], $params['note_id'] , $params['email'], $userid);
                     }
                 } else {
                     $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
@@ -204,10 +204,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case "shareNoteUserRemove":
                 if ($LoggedIn) {
-                    if (!isset($params['id']) || !isset($params["email"])) {
+                    if (!isset($params['id']) || !isset($params['note_id']) || !isset($params["email"])) {
                         $response = ['error' => 'Missing parameters for share'];
                     } else {
-                        $response = shareNoteUserRemove($params['id'], $params['email'], $userid);
+                        $response = shareNoteUserRemove($params['id'], $params['note_id'] , $params['email'], $userid);
                     }
                 } else {
                     $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
@@ -223,6 +223,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 } else {
                     $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
+                }
+                break;
+            case "ShareNoteGet":
+                if (!isset($params["id"])){
+                    $response = ['error' => 'Missing parameters for viewing'];
+                } else {
+                    $response = ShareNoteGet($params["id"], $mail);
                 }
                 break;
 

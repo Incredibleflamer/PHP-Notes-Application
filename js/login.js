@@ -7,6 +7,7 @@ function showError(message) {
 const urlParams = new URLSearchParams(window.location.search);
 const error = urlParams.get("error");
 const ProcessType = urlParams.get("ProcessType");
+const RedirctTo = urlParams.get("redirect");
 
 if (error) {
   showError(error);
@@ -32,7 +33,7 @@ signupForm.addEventListener("submit", async function (event) {
   });
   document.getElementById("signupForm").reset();
   if (data?.status === "success") {
-    window.location.href = "./";
+    window.location.href = RedirctTo ?? "./";
   } else if (data?.message) {
     showError(data?.message);
   }

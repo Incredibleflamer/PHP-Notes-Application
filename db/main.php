@@ -5,7 +5,7 @@ $connection = createTable("notesdb");
 // check if users token is correct
 function login($token) {
     global $connection;
-    $stmt = $connection->prepare("SELECT id, name FROM users WHERE token = ?");
+    $stmt = $connection->prepare("SELECT id, name , mail FROM users WHERE token = ?");
     $stmt->bind_param("s", $token);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -16,7 +16,8 @@ function login($token) {
             'status' => 'success', 
             'user' => [
                 'id' => $user['id'], 
-                'name' => $user['name']
+                'name' => $user['name'],
+                'mail' => $user['mail']
             ]
         ];
     } else {
@@ -190,9 +191,7 @@ function updateNote($note_id, $new_note_name, $new_note_content, $new_images, $n
                 'message' => "Note with ID $note_id not found or you don't have permission to edit it!",
             ];
         }
-
-        $new_note_name = mysqli_real_escape_string($connection, $new_note_name);
-        $new_note_content = mysqli_real_escape_string($connection, $new_note_content);
+        
         $images_json = json_encode($new_images);
         $checklist_json = json_encode($new_checklists);
 
@@ -288,12 +287,12 @@ function getNote($note_id, $userid) {
                 $sharingInfo['id'] = $sharingData['id'];
                 $sharingInfo['shared_with_all'] = $sharingData['shared_with_all'];
 
-                if (!$sharingData['shared_with_all']) {
-                    $emailsStmt = $connection->prepare("SELECT email FROM shared_notes_emails WHERE share_id = ?");
-                    $emailsStmt->bind_param("s", $sharingData['id']);
-                    $emailsStmt->execute();
-                    $emailsResult = $emailsStmt->get_result();
-
+                $emailsStmt = $connection->prepare("SELECT email FROM shared_notes_emails WHERE share_id = ? AND user_id = ?");
+                $emailsStmt->bind_param("ss", $sharingData['id'], $userid);
+                $emailsStmt->execute();
+                $emailsResult = $emailsStmt->get_result();
+                
+                if ($emailsResult->num_rows > 0) {
                     while ($emailRow = $emailsResult->fetch_assoc()) {
                         $sharingInfo['shared_with_emails'][] = $emailRow['email'];
                     }
@@ -450,41 +449,34 @@ function ShareNoteRemove($share_id, $note_id, $user_id) {
 }
 
 // note sharing add user
-function shareNoteUserAdd($share_id, $mail, $user_id) {
+function shareNoteUserAdd($share_id, $noteid , $mail, $user_id) {
     global $connection;
 
     try {
-        // Check if the user is already added to the shared note
-        $query_check = "SELECT * FROM shared_notes_emails WHERE share_id = ? AND email = ? AND user_id = ?";
-        $stmt_check = $connection->prepare($query_check);
-        $stmt_check->bind_param("sss", $share_id, $mail, $user_id);
-        $stmt_check->execute();
-        $result_check = $stmt_check->get_result();
+        $stmt_check_share = $connection->prepare("SELECT id FROM shared_notes WHERE id = ? AND user_id = ? AND note_id = ?");
+        $stmt_check_share->bind_param("sss", $share_id , $user_id, $noteid);
+        $stmt_check_share->execute();
+        $result_check_share = $stmt_check_share->get_result();
 
-        if ($result_check->num_rows > 0) {
-            return ['status' => 'error', 'message' => 'User already added to this shared note'];
+        if ($result_check_share->num_rows == 0) {
+            return ['status' => 'error', 'message' => 'Invalid share ID'];
         }
 
-        // Check if the email exists in the users table
-        $query_user_email = "SELECT mail FROM users WHERE mail = ?";
-        $stmt_user_email = $connection->prepare($query_user_email);
-        $stmt_user_email->bind_param("s", $mail);
-        $stmt_user_email->execute();
-        $result_user_email = $stmt_user_email->get_result();
+        $stmt_check_email = $connection->prepare("SELECT mail FROM users WHERE mail = ?");
+        $stmt_check_email->bind_param("s", $mail);
+        $stmt_check_email->execute();
+        $result_check_email = $stmt_check_email->get_result();
+        if ($result_check_email->num_rows == 0) {
+            return ['status' => 'error', 'message' => 'Email is not registered with us'];
+        }
 
-        if ($result_user_email->num_rows > 0) {
-            // Add user to the shared notes emails table
-            $query_add_user = "INSERT INTO shared_notes_emails (share_id, email, user_id) VALUES (?, ?, ?)";
-            $stmt_add_user = $connection->prepare($query_add_user);
-            $stmt_add_user->bind_param("sss", $share_id, $mail, $user_id);
+        $stmt_add_user = $connection->prepare("INSERT INTO shared_notes_emails (share_id, email, user_id, note_id) VALUES (?, ?, ?, ?)");
+        $stmt_add_user->bind_param("ssss", $share_id, $mail, $user_id , $noteid);
 
-            if ($stmt_add_user->execute()) {
-                return ['status' => 'success', 'message' => 'User added to shared note'];
-            } else {
-                return ['status' => 'error', 'message' => 'Failed to add user to shared note'];
-            }
+        if ($stmt_add_user->execute()) {
+            return ['status' => 'success', 'message' => 'User added to shared note'];
         } else {
-            return ['status' => 'error', 'message' => 'User not found'];
+            return ['status' => 'error', 'message' => 'Failed to add user to shared note'];
         }
     } catch (mysqli_sql_exception $e) {
         return ['status' => 'error', 'message' => 'Exception occurred: ' . $e->getMessage()];
@@ -492,31 +484,21 @@ function shareNoteUserAdd($share_id, $mail, $user_id) {
 }
 
 // note sharing remove user
-function shareNoteUserRemove($share_id, $mail, $user_id) {
+function shareNoteUserRemove($share_id, $note_id , $mail, $user_id) {
     global $connection;
 
     try {
-        // Check if the user exists in the users table
-        $query_user_email = "SELECT mail FROM users WHERE mail = ?";
-        $stmt_user_email = $connection->prepare($query_user_email);
-        $stmt_user_email->bind_param("s", $mail);
-        $stmt_user_email->execute();
-        $result_user_email = $stmt_user_email->get_result();
+        $query_remove_user = "DELETE FROM shared_notes_emails WHERE share_id = ? AND email = ? AND user_id = ? AND note_id = ?";
+        $stmt_remove_user = $connection->prepare($query_remove_user);
+        $stmt_remove_user->bind_param("ssss", $share_id, $mail, $user_id , $note_id);
+        $stmt_remove_user->execute();
 
-        if ($result_user_email->num_rows > 0) {
-            // Remove the user from the shared notes emails table
-            $query_remove_user = "DELETE FROM shared_notes_emails WHERE share_id = ? AND email = ? AND user_id = ?";
-            $stmt_remove_user = $connection->prepare($query_remove_user);
-            $stmt_remove_user->bind_param("sss", $share_id, $mail, $user_id);
-
-            if ($stmt_remove_user->execute()) {
-                return ['status' => 'success', 'message' => 'User removed from shared note'];
-            } else {
-                return ['status' => 'error', 'message' => 'Failed to remove user from shared note'];
-            }
+        if ($stmt_remove_user->affected_rows > 0) {
+            return ['status' => 'success', 'message' => 'User removed from shared note'];
         } else {
-            return ['status' => 'error', 'message' => 'User not found'];
+            return ['status' => 'error', 'message' => 'User not found or not shared on this note'];
         }
+
     } catch (mysqli_sql_exception $e) {
         return ['status' => 'error', 'message' => 'Exception occurred: ' . $e->getMessage()];
     }
@@ -564,7 +546,9 @@ function ShareNoteGet($share_id, $user_mail) {
         $result = $stmt->get_result();
 
         if ($result->num_rows === 0) {
-            return ['status' => 'error', 'message' => 'Note not found.'];
+            return [
+                'redirect' => "./404.html?error=Note Not Found"
+            ];
         }
 
         $row = $result->fetch_assoc();
@@ -575,12 +559,14 @@ function ShareNoteGet($share_id, $user_mail) {
         if ($shared_with_all == 1) {
             $hasAccess = true;
         } else {
-            $emailStmt = $connection->prepare("SELECT 1 FROM shared_notes_emails WHERE share_id = ? AND email = ?");
-            $emailStmt->bind_param("ss", $share_id, $user_mail);
-            $emailStmt->execute();
-            $emailResult = $emailStmt->get_result();
-            if ($emailResult->num_rows > 0) {
-                $hasAccess = true;
+            if ($user_mail && strlen($user_mail) >= 1) {
+                $emailStmt = $connection->prepare("SELECT 1 FROM shared_notes_emails WHERE share_id = ? AND email = ?");
+                $emailStmt->bind_param("ss", $share_id, $user_mail);
+                $emailStmt->execute();
+                $emailResult = $emailStmt->get_result();
+                if ($emailResult->num_rows > 0) {
+                    $hasAccess = true;
+                }
             }
         }
 
@@ -591,18 +577,38 @@ function ShareNoteGet($share_id, $user_mail) {
             $noteResult = $noteStmt->get_result();
 
             if ($noteResult->num_rows > 0) {
-                return ['status' => 'success', 'data' => $noteResult->fetch_assoc()];
+                $note = $noteResult->fetch_assoc();
+                $images = json_decode($note['note_images'], true) ?? [];
+                $checklist = json_decode($note['checklist'], true) ?? [];
+
+                return [
+                    'status' => 'success',
+                    'data' => [
+                        'note_name' => $note['note_name'],
+                        'note_content' => $note['note'],
+                        'note_images' => $images,
+                        'checklist' => $checklist
+                    ],
+                ];
             }
-            return ['status' => 'error', 'message' => 'Note content not found.'];
+            return [
+                'redirect' => "./404.html?error=Note Not Found"
+            ];
+        } else {
+            if (!$user_mail || strlen($user_mail) <= 1){
+                return [
+                    'redirect' => "./login.html?error=Access denied! You do not have permission to view this note Please login and try again.&redirect=./shared.html?id=$share_id"
+                ];   
+            } else {
+                return [
+                    'redirect' => "./404.html?error=This Note Is Private Make Sure Your Mail Is Added To Share List By Note Owner"
+                ];
+            }
         }
-        return [ 
-            'redirct' => "'redirect' => './login.html?error=Access denied You do not have permission to view $share_id note login and try again&redirct=/shared.html/?id=$share_id"
-        ];
     } catch (mysqli_sql_exception $e) {
         return ['status' => 'error', 'message' => 'Exception occurred: ' . $e->getMessage()];
     }
 }
-
 
 // get all note
 function getAllNotes($userid, $Order) {
