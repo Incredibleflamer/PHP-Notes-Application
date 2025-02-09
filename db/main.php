@@ -555,11 +555,12 @@ function ShareNoteGet($share_id, $user_mail) {
         $note_id = $row['note_id'];
         $shared_with_all = $row['shared_with_all'];
         $hasAccess = false;
+        $logged_in = $user_mail && strlen($user_mail) >= 1;
 
         if ($shared_with_all == 1) {
             $hasAccess = true;
         } else {
-            if ($user_mail && strlen($user_mail) >= 1) {
+            if ($logged_in) {
                 $emailStmt = $connection->prepare("SELECT 1 FROM shared_notes_emails WHERE share_id = ? AND email = ?");
                 $emailStmt->bind_param("ss", $share_id, $user_mail);
                 $emailStmt->execute();
@@ -587,7 +588,8 @@ function ShareNoteGet($share_id, $user_mail) {
                         'note_name' => $note['note_name'],
                         'note_content' => $note['note'],
                         'note_images' => $images,
-                        'checklist' => $checklist
+                        'checklist' => $checklist,
+                        'logged_in' => $logged_in
                     ],
                 ];
             }
@@ -609,6 +611,64 @@ function ShareNoteGet($share_id, $user_mail) {
         return ['status' => 'error', 'message' => 'Exception occurred: ' . $e->getMessage()];
     }
 }
+
+// find all notes user has been added by other users
+function ShareNotesGetAll($mail) {
+    global $connection;
+    
+    try {
+        $stmt = $connection->prepare("SELECT note_id, share_id FROM shared_notes_emails WHERE email = ?");
+        $stmt->bind_param("s", $mail);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            return [];
+        }
+        
+        $sharedIds = [];
+        while ($row = $result->fetch_assoc()) {
+            $sharedIds[$row['note_id']] = $row['share_id'];
+        }
+        
+        $noteIds = array_keys($sharedIds);  
+        $noteIdsPlaceholder = implode(",", array_fill(0, count($noteIds), '?'));
+        $noteStmt = $connection->prepare("SELECT * FROM notes WHERE note_id IN ($noteIdsPlaceholder)");
+        
+        $types = str_repeat('s', count($noteIds)); 
+        $noteStmt->bind_param($types, ...$noteIds);
+        $noteStmt->execute();
+        $noteResult = $noteStmt->get_result();
+
+        $data = [];
+        
+        if ($noteResult->num_rows > 0) {
+            while ($row = $noteResult->fetch_assoc()) {
+                $cleanedNoteContent = preg_replace('/\{\[([^\]]+)\]\}/', '', $row["note"]);
+                
+                $shareId = $sharedIds[$row['note_id']] ?? null;
+
+                $data[] = [
+                    "note_name" => $row['note_name'],
+                    "note" => $cleanedNoteContent,
+                    "share_id" => $shareId 
+                ];
+            }
+
+            return [
+                'status' => 'success',
+                'data' => $data
+            ];
+        } 
+        return [];
+    } catch (mysqli_sql_exception $e) {
+        return [
+            'status' => 'error',
+            'message' => 'Exception occurred: ' . $e->getMessage()
+        ];
+    }
+}
+
 
 // get all note
 function getAllNotes($userid, $Order) {

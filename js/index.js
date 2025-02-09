@@ -1,5 +1,6 @@
 const notesContainer = document.querySelector("#all");
 const SearchNotesContainer = document.querySelector("#notes_search");
+const sharedContainer = document.querySelector("#shared");
 const greeting = document.querySelector("#greeting");
 
 const sortOptions = document.querySelector("#sortOptions");
@@ -69,23 +70,30 @@ document.querySelector(".btn_add").addEventListener("click", async () => {
 
 // adding notes div
 function AddNoteDiv(noteid, notetitle, notecontent, pinned, Type) {
-  if (!noteid) return;
+  if (Type !== "shared" && !noteid) return;
+
   const noteElement = document.createElement("div");
   noteElement.classList.add("note-wrapper");
+
   noteElement.innerHTML = `
-    <div class="operations">
+  <div class="operations">
     <div class="title">${notetitle}</div>
-    <button class="delete operations_buttons fas fa-trash-alt "onclick="notedelete(event , ${noteid})"></button>
-    <button class="${
-      pinned ? "pinned" : "pin"
-    } operations_buttons fas fa-thumbtack" onclick="notepin(event , ${noteid})"></button>
+      ${
+        Type === "shared"
+          ? ""
+          : `<button class="delete operations_buttons fas fa-trash-alt "onclick="notedelete(event , ${noteid})"></button>
+      <button class="${
+        pinned ? "pinned" : "pin"
+      } operations_buttons fas fa-thumbtack" onclick="notepin(event , ${noteid})"></button>`
+      }
     </div>
-    <div class="main">${notecontent}</div>
-    `;
+  <div class="main">${notecontent}</div>`;
 
   noteElement.addEventListener("click", (e) => {
     if (!e.target.classList.contains("operations_buttons")) {
-      window.location.href = `./note.html?id=${noteid}`;
+      window.location.href = `./${
+        Type === "shared" ? "shared.html" : "note.html"
+      }?id=${noteid}`;
     }
   });
 
@@ -93,6 +101,8 @@ function AddNoteDiv(noteid, notetitle, notecontent, pinned, Type) {
     notesContainer.appendChild(noteElement);
   } else if (Type === "search") {
     SearchNotesContainer.appendChild(noteElement);
+  } else if (Type === "shared") {
+    sharedContainer.appendChild(noteElement);
   }
 }
 
@@ -221,6 +231,62 @@ function resetNotesView() {
   notesContainer.classList.remove("hidden");
   SearchNotesContainer.innerHTML = "";
   SearchNotesContainer.classList.add("hidden");
+}
+
+// Shared Notes
+const toggleHomeShareIcon = document.querySelector(".tongle_home_share");
+const searchContainer = document.querySelector(".search-container");
+const Container_Sort_Add = document.querySelector(".container");
+
+async function loadSharedNotes() {
+  try {
+    const sharedNotes = await callApi({
+      action: "ShareNotesGetAll",
+      params: {},
+    });
+
+    if (sharedNotes && sharedNotes.data && sharedNotes.data.length > 0) {
+      sharedNotes.data.forEach((note) => {
+        const noteName =
+          note?.note_name?.length > 50
+            ? `${note?.note_name.slice(0, 50)}...`
+            : note?.note_name || "Untitled Note";
+
+        const noteContent =
+          note?.note?.length > 150
+            ? `${note?.note.slice(0, 150)}...`
+            : note?.note || "No Content...";
+        AddNoteDiv(note?.share_id, noteName, noteContent, null, "shared");
+      });
+    }
+
+    notesContainer.classList.add("hidden");
+    sharedContainer.classList.remove("hidden");
+
+    toggleHomeShareIcon.classList.remove("fa-users");
+    toggleHomeShareIcon.classList.add("fa-home");
+    toggleHomeShareIcon.setAttribute("onclick", "showAllNotes()");
+    toggleHomeShareIcon.setAttribute("title", "Go Home");
+
+    searchContainer.classList.add("hidden");
+    Container_Sort_Add.classList.add("hidden");
+  } catch (error) {
+    console.error("Error fetching shared notes:", error);
+  }
+}
+
+function showAllNotes() {
+  sharedContainer.classList.add("hidden");
+  notesContainer.classList.remove("hidden");
+  sharedContainer.innerHTML = "";
+
+  toggleHomeShareIcon.classList.remove("fa-home");
+  toggleHomeShareIcon.classList.add("fa-users");
+  toggleHomeShareIcon.setAttribute("onclick", "loadSharedNotes()");
+  toggleHomeShareIcon.setAttribute("title", "Shared with Me");
+
+  searchContainer.classList.remove("hidden");
+  Container_Sort_Add.classList.remove("hidden");
 }
 
 // logout

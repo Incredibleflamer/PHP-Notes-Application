@@ -9,7 +9,29 @@
 body {
   background: #c7c8cc;
   font-family: "Shadows Into Light", cursive;
-  padding-top: 15rem;
+}
+
+.top {
+  width: 100%;
+  height: 70px;
+  background: #333;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.icons {
+  font-size: 24px;
+  cursor: pointer;
+  padding: 1rem;
 }
 
 h2 {
@@ -17,7 +39,7 @@ h2 {
   font-weight: bold;
   color: #504949;
   position: absolute;
-  top: 4rem;
+  top: 6rem;
   left: 4rem;
   border-bottom: 4px solid #504949;
   font-family: inherit;
@@ -26,26 +48,8 @@ h2 {
 /* add note */
 .btn_add {
   position: relative;
-  top: -0.2rem;
-  left: 5rem;
-  outline: none;
-  border: none;
-  background: #504949;
-  color: white;
-  padding: 0.6rem 2rem;
-  font-family: inherit;
-  border-radius: 30px;
-  font-size: 1rem;
-  cursor: pointer;
-  width: 210px;
-  font-size: 1.5rem;
-}
-
-/* logout */
-#logout {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 12rem;
+  left: 4rem;
   outline: none;
   border: none;
   background: #504949;
@@ -68,10 +72,7 @@ h2 {
 }
 
 .search-container {
-  position: absolute;
   display: inline-block;
-  top: 0rem;
-  right: 1rem;
 }
 
 .btn_search {
@@ -101,8 +102,8 @@ h2 {
   z-index: -1;
   border: 0;
   width: 500px;
-  top: 0rem;
-  right: 0rem;
+  top: 0.7rem;
+  right: 5rem;
 }
 
 .search-bar.active {
@@ -119,8 +120,8 @@ h2 {
 
 .clear-btn {
   position: absolute;
-  top: 1.5rem;
-  right: 1rem;
+  top: 2.3rem;
+  right: 5.5rem;
   transform: translateY(-50%);
   background: transparent;
   border: none;
@@ -145,6 +146,8 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   row-gap: 1rem;
+  position: relative;
+  top: 13rem;
 }
 
 .note-wrapper {
@@ -211,6 +214,8 @@ h2 {
 .sort-dropdown {
   position: relative;
   display: inline-block;
+  top: 12rem;
+  right: 1rem;
 }
 
 .sort-dropdown select {

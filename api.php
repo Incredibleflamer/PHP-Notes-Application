@@ -232,7 +232,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $response = ShareNoteGet($params["id"], $mail);
                 }
                 break;
-
+            case "ShareNotesGetAll":
+                if ($LoggedIn){
+                    $response = ShareNotesGetAll($mail);
+                } else {
+                    $response = ['redirect' => './login.html?error=You Need To Login First To Access'];
+                }
+                break;
             default:
                 $response = ['error' => 'Invalid action'];
                 break;

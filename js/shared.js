@@ -32,7 +32,11 @@ async function LoadNote() {
 
     document.body.innerHTML = `
       <div class="top">
-        <i class="fas fa-arrow-left back" onclick="goback()"></i>
+        ${
+          note?.data?.logged_in
+            ? `<i class="fas fa-home back" onclick="home()"></i>`
+            : ""
+        }
         <div contenteditable="false" id="editable">${
           note?.data?.note_name ? note?.data?.note_name : "Untitled Note"
         }</div>
@@ -168,6 +172,10 @@ async function exportToPDF() {
   }
 
   doc.save(`${noteTitle || "Note"}.pdf`);
+}
+
+async function home() {
+  window.location.href = "./";
 }
 
 // API helper function
